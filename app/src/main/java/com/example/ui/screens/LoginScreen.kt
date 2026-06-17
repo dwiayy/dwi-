@@ -205,7 +205,12 @@ fun LoginScreen(
                                 if (email.isBlank() || password.isBlank()) {
                                     Toast.makeText(context, "Harap lengkapi email dan password!", Toast.LENGTH_SHORT).show()
                                 } else {
-                                    viewModel.login(email)
+                                    val logSuccess = viewModel.loginWithCredentials(email, password)
+                                    if (logSuccess) {
+                                        Toast.makeText(context, "Masuk berhasil!", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "Email tidak terdaftar atau kata sandi salah. Silakan daftar terlebih dahulu!", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             },
                             modifier = Modifier
@@ -231,8 +236,13 @@ fun LoginScreen(
                                 if (email.isBlank() || password.isBlank() || name.isBlank()) {
                                     Toast.makeText(context, "Lengkapi seluruh isian pendaftaran!", Toast.LENGTH_SHORT).show()
                                 } else {
-                                    Toast.makeText(context, "Pendaftaran Berhasil! Silakan masuk.", Toast.LENGTH_LONG).show()
-                                    isRegisterState = false
+                                    val regSuccess = viewModel.register(email, password, name)
+                                    if (regSuccess) {
+                                        Toast.makeText(context, "Pendaftaran Berhasil! Silakan masuk dengan akun baru Anda.", Toast.LENGTH_LONG).show()
+                                        isRegisterState = false
+                                    } else {
+                                        Toast.makeText(context, "Email sudah terdaftar! Gunakan email lain.", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             },
                             modifier = Modifier

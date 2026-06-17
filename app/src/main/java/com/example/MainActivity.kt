@@ -75,7 +75,6 @@ fun RemindFlowApp(
                             MainTab.HOME -> HomeScreen(viewModel = viewModel)
                             MainTab.RUTINITAS -> RoutineScreen(viewModel = viewModel)
                             MainTab.NOTIFIKASI -> NotificationScreen(viewModel = viewModel)
-                            MainTab.ADMIN -> AdminScreen(viewModel = viewModel)
                         }
                     }
                 }
@@ -170,26 +169,6 @@ fun RemindFlowBottomBar(
             modifier = Modifier.testTag("tab_notifikasi")
         )
 
-        // Tab 4: ADMIN
-        NavigationBarItem(
-            selected = currentTab == MainTab.ADMIN,
-            onClick = { onTabSelected(MainTab.ADMIN) },
-            icon = {
-                Icon(
-                    imageVector = if (currentTab == MainTab.ADMIN) Icons.Default.AdminPanelSettings else Icons.Outlined.AdminPanelSettings,
-                    contentDescription = "Admin",
-                    modifier = Modifier.size(24.dp)
-                )
-            },
-            label = { Text("Admin") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = NeutralWhite,
-                selectedTextColor = OrangeLight,
-                unselectedIconColor = TextLightGray,
-                unselectedTextColor = TextLightGray,
-                indicatorColor = OrangeAccent
-            ),
-            modifier = Modifier.testTag("tab_admin")
-        )
+
     }
 }

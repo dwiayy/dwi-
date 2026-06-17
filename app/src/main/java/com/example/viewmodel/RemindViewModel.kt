@@ -1,7 +1,9 @@
 package com.example.viewmodel
 
+import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.model.*
 import kotlinx.coroutines.Job
@@ -23,11 +25,17 @@ enum class AppScreen {
 enum class MainTab {
     HOME,
     RUTINITAS,
-    NOTIFIKASI,
-    ADMIN
+    NOTIFIKASI
 }
 
-class RemindViewModel : ViewModel() {
+class RemindViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val sharedPrefs = application.getSharedPreferences("remind_flow_prefs", Context.MODE_PRIVATE)
+
+    companion object {
+        private const val KEY_USER_EMAIL = "user_email"
+        private const val KEY_IS_LOGGED_IN = "is_logged_in"
+    }
 
     // Navigation & Screen states
     private val _currentScreen = MutableStateFlow(AppScreen.LOGIN)
@@ -82,6 +90,17 @@ class RemindViewModel : ViewModel() {
 
     init {
         loadInitialDummyData()
+        checkSavedLoginSession()
+    }
+
+    private fun checkSavedLoginSession() {
+        val isLoggedIn = sharedPrefs.getBoolean(KEY_IS_LOGGED_IN, false)
+        val savedEmail = sharedPrefs.getString(KEY_USER_EMAIL, "") ?: ""
+        if (isLoggedIn && savedEmail.isNotEmpty()) {
+            _currentUserEmail.value = savedEmail
+            _currentScreen.value = AppScreen.MAIN
+            _currentTab.value = MainTab.HOME
+        }
     }
 
     private fun loadInitialDummyData() {
@@ -146,15 +165,51 @@ class RemindViewModel : ViewModel() {
 
     // Auth functions
     fun login(email: String) {
-        _currentUserEmail.value = email.ifBlank { "guest@remindflow.com" }
+        val finalEmail = email.ifBlank { "guest@remindflow.com" }
+        _currentUserEmail.value = finalEmail
         _currentScreen.value = AppScreen.MAIN
         _currentTab.value = MainTab.HOME
-        addNotification("Selamat datang kembali, ${email.ifBlank { "Pengguna" }}!")
+        
+        sharedPrefs.edit()
+            .putBoolean(KEY_IS_LOGGED_IN, true)
+            .putString(KEY_USER_EMAIL, finalEmail)
+            .apply()
+
+        addNotification("Selamat datang kembali, $finalEmail!")
+    }
+
+    fun loginWithCredentials(email: String, javaStringPassword: String): Boolean {
+        val lowerEmail = email.trim().lowercase()
+        val savedPassword = sharedPrefs.getString("pass_$lowerEmail", null)
+        if (savedPassword != null && savedPassword == javaStringPassword) {
+            login(email.trim())
+            return true
+        }
+        return false
+    }
+
+    fun register(email: String, javaStringPassword: String, name: String): Boolean {
+        val lowerEmail = email.trim().lowercase()
+        if (sharedPrefs.contains("pass_$lowerEmail")) {
+            return false // Email taken
+        }
+        
+        sharedPrefs.edit()
+            .putString("pass_$lowerEmail", javaStringPassword)
+            .putString("name_$lowerEmail", name)
+            .apply()
+        return true
     }
 
     fun logout() {
         _currentUserEmail.value = ""
         _currentScreen.value = AppScreen.LOGIN
+        
+        sharedPrefs.edit()
+            .putBoolean(KEY_IS_LOGGED_IN, false)
+            .putString(KEY_USER_EMAIL, "")
+            .apply()
+
         resetTimer()
     }
 
