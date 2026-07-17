@@ -1,8 +1,12 @@
 package com.example.viewmodel
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.model.*
@@ -25,7 +29,8 @@ enum class AppScreen {
 enum class MainTab {
     HOME,
     RUTINITAS,
-    NOTIFIKASI
+    NOTIFIKASI,
+    PROFIL
 }
 
 class RemindViewModel(application: Application) : AndroidViewModel(application) {
@@ -213,6 +218,88 @@ class RemindViewModel(application: Application) : AndroidViewModel(application) 
         resetTimer()
     }
 
+    fun getCurrentUserName(): String {
+        val email = _currentUserEmail.value.trim().lowercase()
+        if (email.isEmpty()) return "Pengguna"
+        return sharedPrefs.getString("name_$email", null) ?: email.substringBefore("@")
+    }
+
+    fun updateProfileName(newName: String): Boolean {
+        val email = _currentUserEmail.value.trim().lowercase()
+        if (email.isEmpty() || newName.isBlank()) return false
+        sharedPrefs.edit()
+            .putString("name_$email", newName.trim())
+            .apply()
+        addNotification("Nama profil berhasil diubah menjadi: $newName")
+        return true
+    }
+
+    fun updateProfilePassword(oldPass: String, newPass: String): Boolean {
+        val email = _currentUserEmail.value.trim().lowercase()
+        if (email.isEmpty() || oldPass.isBlank() || newPass.isBlank()) return false
+        val savedPassword = sharedPrefs.getString("pass_$email", null)
+        if (savedPassword == oldPass) {
+            sharedPrefs.edit()
+                .putString("pass_$email", newPass)
+                .apply()
+            addNotification("Kata sandi profil berhasil diperbarui.")
+            return true
+        }
+        return false
+    }
+
+    fun getProfileAvatar(): String {
+        val email = _currentUserEmail.value.trim().lowercase()
+        if (email.isEmpty()) return ""
+        return sharedPrefs.getString("avatar_$email", "") ?: ""
+    }
+
+    fun updateProfileAvatar(avatarPath: String) {
+        val email = _currentUserEmail.value.trim().lowercase()
+        if (email.isNotEmpty()) {
+            sharedPrefs.edit()
+                .putString("avatar_$email", avatarPath)
+                .apply()
+            addNotification("Foto profil berhasil diperbarui.")
+        }
+    }
+
+    fun updateProfileEmail(newEmail: String): Boolean {
+        val oldEmail = _currentUserEmail.value.trim().lowercase()
+        val formattedNewEmail = newEmail.trim().lowercase()
+        if (oldEmail.isEmpty() || formattedNewEmail.isEmpty() || !formattedNewEmail.contains("@")) {
+            return false
+        }
+        if (oldEmail == formattedNewEmail) {
+            return true // No change needed
+        }
+        // Check if the target email is already registered
+        if (sharedPrefs.contains("pass_$formattedNewEmail")) {
+            return false // Already taken
+        }
+
+        val pass = sharedPrefs.getString("pass_$oldEmail", "sandi123") ?: "sandi123"
+        val name = sharedPrefs.getString("name_$oldEmail", "Pengguna") ?: "Pengguna"
+        val avatar = sharedPrefs.getString("avatar_$oldEmail", "") ?: ""
+
+        sharedPrefs.edit()
+            // Write to new keys
+            .putString("pass_$formattedNewEmail", pass)
+            .putString("name_$formattedNewEmail", name)
+            .putString("avatar_$formattedNewEmail", avatar)
+            // Remove old keys
+            .remove("pass_$oldEmail")
+            .remove("name_$oldEmail")
+            .remove("avatar_$oldEmail")
+            // Update active session values
+            .putString(KEY_USER_EMAIL, formattedNewEmail)
+            .apply()
+
+        _currentUserEmail.value = formattedNewEmail
+        addNotification("Email berhasil diperbarui ke $formattedNewEmail.")
+        return true
+    }
+
     // Navigation functions
     fun navigateTo(screen: AppScreen, taskId: String? = null) {
         _selectedTaskId.value = taskId
@@ -335,6 +422,37 @@ class RemindViewModel(application: Application) : AndroidViewModel(application) 
             timestamp = "Baru saja"
         )
         _notifications.value = listOf(newNotif) + _notifications.value
+        showSystemNotification(message)
+    }
+
+    private fun showSystemNotification(message: String) {
+        try {
+            val channelId = "remind_flow_channel"
+            val channelName = "RemindFlow Notifications"
+            val notificationManager = getApplication<Application>().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    channelId,
+                    channelName,
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "Channel untuk notifikasi aplikasi RemindFlow"
+                }
+                notificationManager.createNotificationChannel(channel)
+            }
+            
+            val builder = NotificationCompat.Builder(getApplication<Application>(), channelId)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("RemindFlow")
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+                
+            notificationManager.notify(System.currentTimeMillis().toInt(), builder.build())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun triggerNotificationForTask(task: Task) {

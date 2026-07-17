@@ -130,6 +130,17 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    val textFieldColors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextNavyDark,
+                        unfocusedTextColor = TextNavyDark,
+                        focusedLabelColor = RoyalNavy,
+                        unfocusedLabelColor = TextMutedGray,
+                        focusedLeadingIconColor = RoyalNavy,
+                        unfocusedLeadingIconColor = TextMutedGray,
+                        focusedBorderColor = RoyalNavy,
+                        unfocusedBorderColor = TextLightGray
+                    )
+
                     AnimatedVisibility(visible = isRegisterState) {
                         Column {
                             OutlinedTextField(
@@ -147,7 +158,8 @@ fun LoginScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .testTag("register_name_input"),
-                                shape = RoundedCornerShape(12.dp)
+                                shape = RoundedCornerShape(12.dp),
+                                colors = textFieldColors
                             )
                             Spacer(modifier = Modifier.height(14.dp))
                         }
@@ -170,7 +182,8 @@ fun LoginScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("login_email_input"),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = textFieldColors
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -193,7 +206,8 @@ fun LoginScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("login_password_input"),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = textFieldColors
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))

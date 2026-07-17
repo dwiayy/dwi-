@@ -15,10 +15,12 @@ import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -75,6 +77,7 @@ fun RemindFlowApp(
                             MainTab.HOME -> HomeScreen(viewModel = viewModel)
                             MainTab.RUTINITAS -> RoutineScreen(viewModel = viewModel)
                             MainTab.NOTIFIKASI -> NotificationScreen(viewModel = viewModel)
+                            MainTab.PROFIL -> ProfileScreen(viewModel = viewModel)
                         }
                     }
                 }
@@ -167,6 +170,28 @@ fun RemindFlowBottomBar(
                 indicatorColor = OrangeAccent
             ),
             modifier = Modifier.testTag("tab_notifikasi")
+        )
+
+        // Tab 4: PROFIL
+        NavigationBarItem(
+            selected = currentTab == MainTab.PROFIL,
+            onClick = { onTabSelected(MainTab.PROFIL) },
+            icon = {
+                Icon(
+                    imageVector = if (currentTab == MainTab.PROFIL) Icons.Default.Person else Icons.Outlined.Person,
+                    contentDescription = "Profil",
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            label = { Text("Profil") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = NeutralWhite,
+                selectedTextColor = OrangeLight,
+                unselectedIconColor = TextLightGray,
+                unselectedTextColor = TextLightGray,
+                indicatorColor = OrangeAccent
+            ),
+            modifier = Modifier.testTag("tab_profil")
         )
 
 
